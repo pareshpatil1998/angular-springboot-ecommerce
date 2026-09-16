@@ -1,58 +1,97 @@
 pipeline {
+
     agent any
-    
+
+    environment {
+        // Java 21 configuration
+        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'
+        PATH = "${JAVA_HOME}/bin:${env.PATH}"
+    }
+
     stages {
+
         stage('Checkout Code') {
+
             steps {
+
                 // Pulls code from your GitHub repository
                 checkout scm
             }
         }
-        
-        stage('Build Backend (Spring Boot)') {
+
+        stage('Check Java') {
+
             steps {
+
+                sh '''
+                    echo "JAVA_HOME=$JAVA_HOME"
+                    java -version
+                    which java
+                '''
+            }
+        }
+
+        stage('Build Backend (Spring Boot)') {
+
+            steps {
+
                 dir('backend') {
-                    // Uses Maven wrapper inside the backend folder to build the jar
+
+                    // Give Maven wrapper execute permission
                     sh 'chmod +x mvnw'
+
+                    // Build Spring Boot application
                     sh './mvnw clean package -DskipTests'
                 }
             }
         }
-        
+
         stage('Build Frontend (Angular)') {
+
             steps {
+
                 dir('frontend') {
-                    // Installs node modules and builds Angular production assets
+
+                    // Install Node dependencies
                     sh 'npm install --legacy-peer-deps'
+
+                    // Build Angular production assets
                     sh 'npx ng build --configuration production'
                 }
             }
         }
-        
+
         stage('Build & Push Docker Images') {
+
             steps {
+
                 script {
+
                     // Build Backend Docker Image
                     dir('backend') {
-                        // Assumes a Dockerfile exists in your backend folder
+
                         sh 'docker build -t backend-app:latest .'
                     }
-                    
+
                     // Build Frontend Docker Image
                     dir('frontend') {
-                        // Uses the Dockerfile shown in your VS Code screenshot
+
                         sh 'docker build -t frontend-app:latest .'
                     }
                 }
             }
         }
     }
-    
+
     post {
+
         always {
+
             echo 'Pipeline execution completed!'
         }
+
         failure {
+
             echo 'Pipeline failed. Check the logs for details.'
         }
     }
