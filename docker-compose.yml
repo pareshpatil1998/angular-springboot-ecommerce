@@ -1,51 +1,46 @@
-services:
-  # 1. Microsoft SQL Server Database
-  mssql-db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: mssql-db
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrong!Password123"
-      MSSQL_PID: "Express"
-    ports:
-      - "1433:1433"
-    volumes:
-      - mssql_data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Password123' -Q 'SELECT 1' -C || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
+version: '3.8'
 
-  # 2. Spring Boot Backend
+services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: springboot-backend
+    build: ./backend
+    container_name: spring-boot-backend
     ports:
       - "8080:8080"
-    restart: on-failure
-    depends_on:
-      mssql-db:
-        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: "jdbc:sqlserver://mssql-db:1433;databaseName=master;trustServerCertificate=true;encrypt=false;"
-      SPRING_DATASOURCE_USERNAME: "sa"
-      SPRING_DATASOURCE_PASSWORD: "YourStrong!Password123"
-      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-test_key_dummy}"
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/ecommerce
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+    depends_on:
+      - mysql-db
+    networks:
+      - ecom-network
 
-  # 3. Angular Frontend
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: ./frontend
     container_name: angular-frontend
     ports:
       - "80:80"
     depends_on:
       - backend
+    networks:
+      - ecom-network
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=ecommerce
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ecom-network
 
 volumes:
-  mssql_data:
+  mysql_data:
+
+networks:
+  ecom-network:
+    driver: bridge
