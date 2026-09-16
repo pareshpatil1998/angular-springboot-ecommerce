@@ -24,9 +24,24 @@ pipeline {
             steps {
 
                 sh '''
+                    echo "===== JAVA ENVIRONMENT ====="
                     echo "JAVA_HOME=$JAVA_HOME"
+                    echo "PATH=$PATH"
+
+                    echo "===== JAVA ====="
                     java -version
                     which java
+
+                    echo "===== JAVAC ====="
+                    javac -version
+                    which javac
+
+                    echo "===== JAVA_HOME BIN ====="
+                    ls -l $JAVA_HOME/bin/java
+                    ls -l $JAVA_HOME/bin/javac
+
+                    echo "===== MAVEN ====="
+                    ./backend/mvnw -version
                 '''
             }
         }
