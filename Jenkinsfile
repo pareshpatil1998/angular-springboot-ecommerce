@@ -3,8 +3,9 @@ pipeline {
     agent any
 
     environment {
-        // Java 21 configuration
-        JAVA_HOME = '/usr/lib/jvm/java-21-openjdk-amd64'
+
+        // Java 17 JDK
+        JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
         PATH = "${JAVA_HOME}/bin:${env.PATH}"
     }
 
@@ -14,7 +15,6 @@ pipeline {
 
             steps {
 
-                // Pulls code from your GitHub repository
                 checkout scm
             }
         }
@@ -36,12 +36,14 @@ pipeline {
                     javac -version
                     which javac
 
-                    echo "===== JAVA_HOME BIN ====="
+                    echo "===== JAVA HOME BIN ====="
                     ls -l $JAVA_HOME/bin/java
                     ls -l $JAVA_HOME/bin/javac
 
                     echo "===== MAVEN ====="
-                    ./backend/mvnw -version
+                    cd backend
+                    chmod +x mvnw
+                    ./mvnw -version
                 '''
             }
         }
@@ -52,10 +54,8 @@ pipeline {
 
                 dir('backend') {
 
-                    // Give Maven wrapper execute permission
                     sh 'chmod +x mvnw'
 
-                    // Build Spring Boot application
                     sh './mvnw clean package -DskipTests'
                 }
             }
@@ -67,10 +67,8 @@ pipeline {
 
                 dir('frontend') {
 
-                    // Install Node dependencies
                     sh 'npm install --legacy-peer-deps'
 
-                    // Build Angular production assets
                     sh 'npx ng build --configuration production'
                 }
             }
@@ -82,13 +80,11 @@ pipeline {
 
                 script {
 
-                    // Build Backend Docker Image
                     dir('backend') {
 
                         sh 'docker build -t backend-app:latest .'
                     }
 
-                    // Build Frontend Docker Image
                     dir('frontend') {
 
                         sh 'docker build -t frontend-app:latest .'
