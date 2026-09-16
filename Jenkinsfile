@@ -6,7 +6,9 @@ pipeline {
 
         // Java 17 JDK
         JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
-        PATH = "${JAVA_HOME}/bin:${env.PATH}"
+
+        // Java + Node.js
+        PATH = "${JAVA_HOME}/bin:/usr/bin:${env.PATH}"
     }
 
     stages {
@@ -14,7 +16,6 @@ pipeline {
         stage('Checkout Code') {
 
             steps {
-
                 checkout scm
             }
         }
@@ -67,9 +68,24 @@ pipeline {
 
                 dir('frontend') {
 
-                    sh 'npm install --legacy-peer-deps'
+                    sh '''
+                        echo "===== NODE ENVIRONMENT ====="
 
-                    sh 'npx ng build --configuration production'
+                        echo "PATH=$PATH"
+
+                        echo "===== NODE ====="
+                        node -v
+                        which node
+
+                        echo "===== NPM ====="
+                        npm -v
+                        which npm
+
+                        echo "===== ANGULAR BUILD ====="
+                        npm install --legacy-peer-deps
+
+                        npx ng build --configuration production
+                    '''
                 }
             }
         }
@@ -97,12 +113,10 @@ pipeline {
     post {
 
         always {
-
             echo 'Pipeline execution completed!'
         }
 
         failure {
-
             echo 'Pipeline failed. Check the logs for details.'
         }
     }
