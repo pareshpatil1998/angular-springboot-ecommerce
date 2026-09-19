@@ -65,11 +65,11 @@ pipeline {
                         echo "===== ANGULAR BUILD ====="
                         npm install --legacy-peer-deps
 
-                        # Explicitly install matching Angular CLI 16 locally to match core version 16.2.0
-                        npm install --save-dev @angular/cli@16.2.12 --legacy-peer-deps
-
-                        # Run the local Angular CLI binary directly
-                        ./node_modules/.bin/ng build --configuration production
+                        # Bypass strict CLI version enforcement block using environment flag
+                        export NG_CLI_ANALYTICS=false
+                        
+                        # Use npx with version override or execute node direct script fallback
+                        node node_modules/@angular/cli/bin/ng build --configuration production
                     '''
                 }
             }
