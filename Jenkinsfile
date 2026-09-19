@@ -55,26 +55,24 @@ pipeline {
         }
 
         stage('Build Frontend (Angular)') {
-            steps {
-                dir('frontend') {
-                    sh '''
-                        echo "===== NODE ENVIRONMENT ====="
-                        node -v
-                        npm -v
+        steps {
+            dir('frontend') {
+                sh '''
+                    echo "===== NODE ENVIRONMENT ====="
+                    node -v
+                    npm -v
 
-                        echo "===== CLEAN & INSTALL ANGULAR 16 ====="
-                        # Remove stale lock files or node_modules causing version mismatch
-                        rm -rf node_modules package-lock.json
+                    echo "===== CLEAN & INSTALL ====="
+                    rm -rf node_modules package-lock.json
+                    npm install --legacy-peer-deps
 
-                        # Clean install packages matching Angular 16 strictly
-                        npm install --legacy-peer-deps
-
-                        echo "===== ANGULAR BUILD ====="
-                        npx ng build --configuration production
-                    '''
-                }
+                    echo "===== ANGULAR BUILD (LOCAL DIRECT) ====="
+                    # Bypass global CLI v17 wrapper by executing the local node module binary directly
+                    ./node_modules/.bin/ng build --configuration production
+                '''
             }
-        }   
+        }
+    }   
 
         stage('Build & Push Docker Images') {
             steps {
