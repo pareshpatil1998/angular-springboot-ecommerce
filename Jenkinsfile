@@ -3,7 +3,6 @@ pipeline {
     agent any
 
     environment {
-
         // Java 17 JDK
         JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
 
@@ -14,16 +13,13 @@ pipeline {
     stages {
 
         stage('Checkout Code') {
-
             steps {
                 checkout scm
             }
         }
 
         stage('Check Java') {
-
             steps {
-
                 sh '''
                     echo "===== JAVA ENVIRONMENT ====="
                     echo "JAVA_HOME=$JAVA_HOME"
@@ -50,27 +46,19 @@ pipeline {
         }
 
         stage('Build Backend (Spring Boot)') {
-
             steps {
-
                 dir('backend') {
-
                     sh 'chmod +x mvnw'
-
                     sh './mvnw clean package -DskipTests'
                 }
             }
         }
 
         stage('Build Frontend (Angular)') {
-
             steps {
-
                 dir('frontend') {
-
                     sh '''
                         echo "===== NODE ENVIRONMENT ====="
-
                         echo "PATH=$PATH"
 
                         echo "===== NODE ====="
@@ -84,25 +72,21 @@ pipeline {
                         echo "===== ANGULAR BUILD ====="
                         npm install --legacy-peer-deps
 
-                        npx ng build --configuration production
+                        # Use Angular 16 CLI package to ensure compatibility with project version 16.2.0
+                        npx --package @angular/cli@16 ng build --configuration production
                     '''
                 }
             }
         }
 
         stage('Build & Push Docker Images') {
-
             steps {
-
                 script {
-
                     dir('backend') {
-
                         sh 'docker build -t backend-app:latest .'
                     }
 
                     dir('frontend') {
-
                         sh 'docker build -t frontend-app:latest .'
                     }
                 }
@@ -111,7 +95,6 @@ pipeline {
     }
 
     post {
-
         always {
             echo 'Pipeline execution completed!'
         }
