@@ -1,4 +1,3 @@
-```groovy
 pipeline {
 
     agent any
@@ -92,10 +91,8 @@ pipeline {
                         echo "        INSTALL DEPENDENCIES"
                         echo "========================================"
 
-                        # IMPORTANT:
-                        # Do NOT delete package-lock.json.
-                        # npm ci installs exactly what is defined
-                        # in package-lock.json.
+                        # Do NOT delete node_modules or package-lock.json.
+                        # npm ci installs dependencies from package-lock.json.
 
                         npm ci --legacy-peer-deps
 
@@ -156,4 +153,3 @@ pipeline {
         }
     }
 }
-```
