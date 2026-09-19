@@ -62,14 +62,15 @@ pipeline {
                         node -v
                         npm -v
 
-                        echo "===== ANGULAR BUILD ====="
+                        echo "===== CLEAN & INSTALL ANGULAR 16 ====="
+                        # Remove stale lock files or node_modules causing version mismatch
+                        rm -rf node_modules package-lock.json
+
+                        # Clean install packages matching Angular 16 strictly
                         npm install --legacy-peer-deps
 
-                        # Force install Angular CLI version 16 explicitly to match project version 16.2.0
-                        npm install --save-dev @angular/cli@16.2.12 --force
-
-                        # Execute build via local npx passing legacy type flag if needed
-                        npx ng build --configuration production --skip-color
+                        echo "===== ANGULAR BUILD ====="
+                        npx ng build --configuration production
                     '''
                 }
             }
