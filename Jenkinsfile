@@ -59,25 +59,21 @@ pipeline {
                 dir('frontend') {
                     sh '''
                         echo "===== NODE ENVIRONMENT ====="
-                        echo "PATH=$PATH"
-
-                        echo "===== NODE ====="
                         node -v
-                        which node
-
-                        echo "===== NPM ====="
                         npm -v
-                        which npm
 
                         echo "===== ANGULAR BUILD ====="
                         npm install --legacy-peer-deps
 
-                        # Use Angular 16 CLI package to ensure compatibility with project version 16.2.0
-                        npx --package @angular/cli@16 ng build --configuration production
+                        # Explicitly install matching Angular CLI 16 locally to match core version 16.2.0
+                        npm install --save-dev @angular/cli@16.2.12 --legacy-peer-deps
+
+                        # Run the local Angular CLI binary directly
+                        ./node_modules/.bin/ng build --configuration production
                     '''
                 }
             }
-        }
+        }   
 
         stage('Build & Push Docker Images') {
             steps {
