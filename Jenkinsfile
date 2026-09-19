@@ -1,8 +1,16 @@
+```groovy
 pipeline {
 
     agent any
 
+    options {
+        // Prevent Jenkins Declarative Pipeline from doing
+        // an automatic checkout before our Checkout Code stage.
+        skipDefaultCheckout(true)
+    }
+
     environment {
+
         // Java 17 JDK
         JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
 
@@ -21,22 +29,29 @@ pipeline {
         stage('Check Java') {
             steps {
                 sh '''
-                    echo "===== JAVA ENVIRONMENT ====="
+                    echo "========================================"
+                    echo "        JAVA ENVIRONMENT"
+                    echo "========================================"
+
                     echo "JAVA_HOME=$JAVA_HOME"
                     echo "PATH=$PATH"
 
+                    echo ""
                     echo "===== JAVA ====="
                     java -version
                     which java
 
+                    echo ""
                     echo "===== JAVAC ====="
                     javac -version
                     which javac
 
+                    echo ""
                     echo "===== JAVA HOME BIN ====="
                     ls -l $JAVA_HOME/bin/java
                     ls -l $JAVA_HOME/bin/javac
 
+                    echo ""
                     echo "===== MAVEN ====="
                     cd backend
                     chmod +x mvnw
@@ -48,41 +63,78 @@ pipeline {
         stage('Build Backend (Spring Boot)') {
             steps {
                 dir('backend') {
-                    sh 'chmod +x mvnw'
-                    sh './mvnw clean package -DskipTests'
+                    sh '''
+                        echo "========================================"
+                        echo "       BUILDING SPRING BOOT"
+                        echo "========================================"
+
+                        chmod +x mvnw
+
+                        ./mvnw clean package -DskipTests
+                    '''
                 }
             }
         }
 
         stage('Build Frontend (Angular)') {
-        steps {
-            dir('frontend') {
-                sh '''
-                    echo "===== NODE ENVIRONMENT ====="
-                    node -v
-                    npm -v
+            steps {
+                dir('frontend') {
+                    sh '''
+                        echo "========================================"
+                        echo "        NODE ENVIRONMENT"
+                        echo "========================================"
 
-                    echo "===== CLEAN & INSTALL ====="
-                    rm -rf node_modules package-lock.json
-                    npm install --legacy-peer-deps
+                        node -v
+                        npm -v
 
-                    echo "===== ANGULAR BUILD (LOCAL DIRECT) ====="
-                    # Bypass global CLI v17 wrapper by executing the local node module binary directly
-                    ./node_modules/.bin/ng build --configuration production
-                '''
+                        echo ""
+                        echo "========================================"
+                        echo "        INSTALL DEPENDENCIES"
+                        echo "========================================"
+
+                        # IMPORTANT:
+                        # Do NOT delete package-lock.json.
+                        # npm ci installs exactly what is defined
+                        # in package-lock.json.
+
+                        npm ci --legacy-peer-deps
+
+                        echo ""
+                        echo "========================================"
+                        echo "        ANGULAR VERSION"
+                        echo "========================================"
+
+                        ./node_modules/.bin/ng version
+
+                        echo ""
+                        echo "========================================"
+                        echo "        ANGULAR PRODUCTION BUILD"
+                        echo "========================================"
+
+                        ./node_modules/.bin/ng build --configuration production
+                    '''
+                }
             }
         }
-    }   
 
-        stage('Build & Push Docker Images') {
+        stage('Build Docker Images') {
             steps {
                 script {
+
+                    echo "========================================"
+                    echo "        BUILDING DOCKER IMAGES"
+                    echo "========================================"
+
                     dir('backend') {
-                        sh 'docker build -t backend-app:latest .'
+                        sh '''
+                            docker build -t backend-app:latest .
+                        '''
                     }
 
                     dir('frontend') {
-                        sh 'docker build -t frontend-app:latest .'
+                        sh '''
+                            docker build -t frontend-app:latest .
+                        '''
                     }
                 }
             }
@@ -90,8 +142,13 @@ pipeline {
     }
 
     post {
+
         always {
             echo 'Pipeline execution completed!'
+        }
+
+        success {
+            echo 'Pipeline completed successfully!'
         }
 
         failure {
@@ -99,3 +156,4 @@ pipeline {
         }
     }
 }
+```
